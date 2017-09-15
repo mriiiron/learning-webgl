@@ -1,0 +1,16 @@
+html, body, .wrapper {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.wrapper {
+    display: flex;
+    background-color: gainsboro;
+}
+
+#glCanvas {
+    width: 640px;
+    height: 480px;
+    margin: auto;
+}
