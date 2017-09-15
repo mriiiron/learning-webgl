@@ -61,27 +61,20 @@ function updateBuffers(gl, colorOffset) {
     
     const colorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    if (isColorValDecreasing) {
-        colorVal = colorVal - colorOffset;
-        if (colorVal < 0.0) {
-            colorVal = 0.0 - colorVal;
-            isColorValDecreasing = false;
-        }
-    }
-    else {
-        colorVal = colorVal + colorOffset;
-        if (colorVal > 1.0) {
-            colorVal = 2.0 - colorVal;
-            isColorValDecreasing = true;
-        }
-    }
     var colors = [
-        colorVal,  1.0 - colorVal,  1.0,  1.0,
-        colorVal,  1.0 - colorVal,  0.0,  1.0,
-        0.0,  colorVal,  1.0 - colorVal,  1.0,
-        1.0 - colorVal,  0.0,  colorVal,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        1.0,  0.0,  0.0,  1.0,
+        0.0,  0.0,  1.0,  1.0,
+        0.0,  0.0,  1.0,  1.0,
+        0.0,  0.0,  1.0,  1.0
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    
+    // TODO
     
     return {
         position: positionBuffer,
