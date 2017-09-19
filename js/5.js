@@ -68,14 +68,8 @@ function loadTexture(gl, url) {
     image.onload = function() {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
-        if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-            gl.generateMipmap(gl.TEXTURE_2D);
-        }
-        else {
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        }
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);  // Use NEAREST for both texture magnification and minification to keep texture sharp
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);  // Do not generate Mipmap since we need sharp textures
     };
     image.src = url;
 
@@ -87,10 +81,10 @@ function updateBuffers(gl, colorOffset) {
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     var positions = [
-        -1.0, -1.0,
-         1.0, -1.0,
-         1.0,  1.0,
-        -1.0,  1.0
+        -32.0,  32.0,
+         32.0,  32.0,
+         32.0, -32.0,
+        -32.0, -32.0
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     
@@ -108,7 +102,7 @@ function updateBuffers(gl, colorOffset) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     var indices = [
         0, 1, 2,
-        1, 2, 3
+        0, 2, 3
     ];
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
     
@@ -129,13 +123,15 @@ function drawScene(gl, programInfo, buffers, texture) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// Set the projection matrix:
-    // 45 degrees angle of view, z-range 0.1 ~ 100.0, keep screen aspect ratio
-    const angleOfView = 45 * Math.PI / 180;     // in radians
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    // Create a orthogonal projection matrix for 640x480 viewport
+    const left = -320;
+    const right = 320;
+    const bottom = -240;
+    const top = 240;
     const zNear = 0.1;
     const zFar = 100.0;
     const projectionMatrix = mat4.create();
-    mat4.perspective(projectionMatrix, angleOfView, aspect, zNear, zFar);
+    mat4.ortho(projectionMatrix, left, right, bottom, top, zNear, zFar);
 
     // Set the model view matrix:
     // Camera position at (0, 0, -6)
@@ -222,6 +218,8 @@ function main() {
         }
     };
     
+    const texture = loadTexture(gl, './assets/texture/player.png');
+    
     var start = null;
     
     // Here's where we call the routine that builds all the objects we'll be drawing.
@@ -230,7 +228,7 @@ function main() {
         var colorOffset = (now - start) / 1000.0;
         start = now;
         var buffers = updateBuffers(gl, colorOffset);
-        drawScene(gl, programInfo, buffers);
+        drawScene(gl, programInfo, buffers, texture);
         window.requestAnimationFrame(render);
     }
     
