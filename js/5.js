@@ -1,20 +1,21 @@
 const vsSource = `
     attribute vec4 aVertexPosition;
-    attribute vec4 aVertexColor;
+    attribute vec2 aTextureCoord;
     uniform mat4 uModelViewMatrix;
     uniform mat4 uProjectionMatrix;
-    varying lowp vec4 vColor;
+    varying highp vec2 vTextureCoord;
     void main() {
     	gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-        vColor = aVertexColor;
+        vTextureCoord = aTextureCoord;
     }
 `;
 
 // Fragment shader program
 const fsSource = `
-    varying lowp vec4 vColor;
-    void main() {
-    	gl_FragColor = vColor;
+    varying highp vec2 vTextureCoord;
+    uniform sampler2D uSampler;
+    void main(void) {
+        gl_FragColor = texture2D(uSampler, vTextureCoord);
     }
 `;
 
@@ -83,21 +84,29 @@ function loadTexture(gl, url) {
 
 function updateBuffers(gl, colorOffset) {
     
-    const positionBuffer = gl.createBuffer();
+    var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    const positions = [
-         1.0,  1.0,
-        -1.0,  1.0,
+    var positions = [
+        -1.0, -1.0,
          1.0, -1.0,
-        -1.0, -1.0
+         1.0,  1.0,
+        -1.0,  1.0
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     
-    // TODO: textureCoordBuffer
+    var textureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+    var textureCoordinates = [
+        0.0,  0.0,
+        1.0,  0.0,
+        1.0,  1.0,
+        0.0,  1.0
+    ]
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates), gl.STATIC_DRAW);
     
-    const indexBuffer = gl.createBuffer();
+    var indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    const indices = [
+    var indices = [
         0, 1, 2,
         1, 2, 3
     ];
@@ -105,12 +114,12 @@ function updateBuffers(gl, colorOffset) {
     
     return {
         position: positionBuffer,
-        // textureCoord: textureCoordBuffer,
+        textureCoord: textureCoordBuffer,
         indices: indexBuffer
     };
 }
 
-function drawScene(gl, programInfo, buffers) {
+function drawScene(gl, programInfo, buffers, texture) {
 
 	// Clear the Canvas
     gl.clearColor(0.0, 0.0, 0.0, 1.0);    // Clear to black, fully opaque
@@ -145,16 +154,16 @@ function drawScene(gl, programInfo, buffers) {
         gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
     }
     
-    // Pull colors from the color buffer and put into the vertexColor attribute.
+    // Pull texture coordinates from the texture coordinate buffer
     {
-        const numComponents = 4;
+        const numComponents = 2;
         const type = gl.FLOAT;
         const normalize = false;
         const stride = 0;
         const offset = 0;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-        gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, numComponents, type, normalize, stride, offset);
-        gl.enableVertexAttribArray( programInfo.attribLocations.vertexColor);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
+        gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, numComponents, type, normalize, stride, offset);
+        gl.enableVertexAttribArray( programInfo.attribLocations.textureCoord);
     }
     
     // Tell WebGL to use our program when drawing
@@ -167,6 +176,15 @@ function drawScene(gl, programInfo, buffers) {
 
     // Use indice index to draw
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+    
+    // Tell WebGL we want to affect texture unit 0
+    gl.activeTexture(gl.TEXTURE0);
+
+    // Bind the texture to texture unit 0
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Tell the shader we bound the texture to texture unit 0
+    gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
     
 	// Draw a rectangle
     {
@@ -195,12 +213,13 @@ function main() {
         program: shaderProgram,
         attribLocations: {
             vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-            vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
+            textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
         },
         uniformLocations: {
             projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
             modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-        },
+            uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
+        }
     };
     
     var start = null;
