@@ -6,9 +6,10 @@ html, body, .wrapper {
 
 .wrapper {
     display: flex;
-    background-color: gainsboro;
+    background-color: black;
 }
 
 #glCanvas {
     margin: auto;
+    border: 1px dashed grey;
 }

@@ -52,7 +52,7 @@ function loadTexture(gl, url) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     
-    // Opaque blue pixel used as texture before the actual image loads
+    // Opaque white pixel used as texture before the actual image loads
     const level = 0;
     const internalFormat = gl.RGBA;
     const width = 1;
@@ -60,7 +60,7 @@ function loadTexture(gl, url) {
     const border = 0;
     const srcFormat = gl.RGBA;
     const srcType = gl.UNSIGNED_BYTE;
-    const pixel = new Uint8Array([0, 0, 255, 255]);
+    const pixel = new Uint8Array([255, 255, 255, 255]);
     gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
     
     // Load actual texture
@@ -69,7 +69,7 @@ function loadTexture(gl, url) {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);  // Use NEAREST for both texture magnification and minification to keep texture sharp
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);  // Do not generate Mipmap since we need sharp textures
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);  // Do not generate Mipmap or using LINEAR since we need sharp textures
     };
     image.src = url;
 
@@ -218,7 +218,7 @@ function main() {
         }
     };
     
-    const texture = loadTexture(gl, './assets/texture/player.png');
+    const texture = loadTexture(gl, './assets/texture/tex1.png');
     
     var start = null;
     
